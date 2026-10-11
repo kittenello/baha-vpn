@@ -107,4 +107,3 @@ project.yml — воспроизводимый xcode-проект.
 в Native/Xray-core-LICENSE, исходники закреплённой версии:
 https://github.com/XTLS/Xray-core/tree/b26a91de4f3294e26a0ad0a970b81a386a41f789.
 go.mod/go.sum фиксируют зависимости; их лицензии остаются у соответствующих проектов.
-
