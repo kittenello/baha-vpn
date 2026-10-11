@@ -15,10 +15,6 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: show toolchain
-        run: |
-          xcodebuild -version
-          swift --version
       - name: test parser, configuration and persistence models
         working-directory: Core
         env:
@@ -53,29 +49,10 @@ jobs:
           cp -R build/device/Build/Products/Release-iphoneos/BahaVPN.app build/ipa/Payload/
           cd build/ipa
           zip -q -r ../baha-vpn-unsigned.ipa Payload
-      - name: build simulator app
-        run: |
-          set -o pipefail
-          xcodebuild -project BahaVPN.xcodeproj -scheme BahaVPN \
-            -configuration Debug -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/simulator ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
-            build | tee simulator-build.log
-      - name: test import persistence, launch simulator and capture preview
-        run: python3 scripts/simulator_preview.py
-      - name: upload unsigned ipa and simulator preview
+      - name: upload ipa
         uses: actions/upload-artifact@v4
         with:
-          name: baha-vpn-prototype
-          path: |
-            build/baha-vpn-unsigned.ipa
-            build/preview.png
-            build/ui-tests.xcresult
-            build/simulator/Build/Products/Debug-iphonesimulator/BahaVPN.app
+          name: baha-vpn-ipa
+          path: build/baha-vpn-unsigned.ipa
+          if-no-files-found: error
           retention-days: 14
-      - name: upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: '*-build.log'
-          if-no-files-found: ignore

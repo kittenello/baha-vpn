@@ -62,12 +62,12 @@ workflow ios prototype:
 2. проверка json, сгенерированных swift-клиентом, настоящим xray;
 3. проверка udp-пакета через tun до локального echo-сервера и повторного запуска ядра;
 4. сборка full xray, приложения и packet tunnel для iphone;
-5. упаковка unsigned ipa, сборка симулятора;
-6. ui-тесты импорта ссылок/json и сохранения избранного после перезапуска, скриншот.
+5. упаковка unsigned ipa.
 
 полное ядро и зависимости собираются дольше прежнего урезанного бинарника.
-готовый xcframework кешируется по исходникам. артефакт baha-vpn-prototype содержит ipa,
-приложение симулятора, preview.png и результаты ui-тестов. build-logs содержит логи.
+готовый xcframework кешируется по исходникам. единственный артефакт baha-vpn-ipa содержит
+только baha-vpn-unsigned.ipa. симулятор, превью, результаты ui-тестов и архивы логов
+в actions не создаются. логи сборки доступны в обычном выводе github actions.
 
 unsigned ipa требует подписи apple developer для приложения и расширения
 с capability network extensions → packet tunnel. успешная сборка и loopback-тест
@@ -92,8 +92,9 @@ open BahaVPN.xcodeproj
 
 выбери developer team и уникальные bundle identifiers для BahaVPN и PacketTunnel.
 идентификатор расширения должен быть идентификатором приложения с суффиксом .tunnel.
-app groups не требуются. simulator xcframework в текущем build script — arm64,
-как у macos-15 runner; iphone target — arm64.
+app groups не требуются. по умолчанию build script собирает только iphone arm64.
+для локальной разработки и ручных ui-тестов можно отдельно выполнить
+python3 scripts/build_native.py --simulator; эта опция в actions не используется.
 
 ## структура и лицензии
 

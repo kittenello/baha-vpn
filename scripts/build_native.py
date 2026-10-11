@@ -1,5 +1,8 @@
 """Build the full pinned Xray core as one Go runtime per Network Extension process."""
 import os
+import sys
+import plistlib
+import shutil
 from pathlib import Path
 import subprocess
 
@@ -17,12 +20,20 @@ fixture_env["XRAY_LOCATION_ASSET"] = str(root / "Tunnel" / "Resources")
 if (root / "build" / "fixtures").exists():
     fixture_env["BAHA_FIXTURES"] = str(root / "build" / "fixtures")
 run("go", "test", "-v", "./engine", env=fixture_env)
-variants = [("iphoneos", "arm64", "arm64-apple-ios17.0"),
-            ("iphonesimulator", "arm64", "arm64-apple-ios17.0-simulator")]
+include_simulator = "--simulator" in sys.argv
+variants = [("iphoneos", "arm64", "arm64-apple-ios17.0")]
+if include_simulator:
+    variants.append(("iphonesimulator", "arm64", "arm64-apple-ios17.0-simulator"))
 framework = native / "XrayNative.xcframework"
 if framework.exists():
-    print("using cached native framework")
-    raise SystemExit(0)
+    metadata = plistlib.loads((framework / "Info.plist").read_bytes())
+    has_simulator = any(item.get("SupportedPlatformVariant") == "simulator" for item in metadata["AvailableLibraries"])
+    if has_simulator == include_simulator:
+        print("using cached native framework")
+        raise SystemExit(0)
+    # Delete only the verified generated framework in this project's Native directory.
+    framework.resolve().relative_to(native.resolve())
+    shutil.rmtree(framework)
 libraries = []
 for sdk, arch, target in variants:
     directory = output / (sdk + "-" + arch)
