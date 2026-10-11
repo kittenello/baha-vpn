@@ -12,7 +12,9 @@ def run(*args, env=None):
     subprocess.run(args, cwd=native, env=env, check=True)
 
 run("go", "mod", "tidy")
-fixture_env = dict(os.environ, BAHA_FIXTURES=str(root / "build" / "fixtures"))
+fixture_env = dict(os.environ)
+if (root / "build" / "fixtures").exists():
+    fixture_env["BAHA_FIXTURES"] = str(root / "build" / "fixtures")
 run("go", "test", "-v", "./engine", env=fixture_env)
 variants = [("iphoneos", "arm64", "arm64-apple-ios17.0"),
             ("iphonesimulator", "arm64", "arm64-apple-ios17.0-simulator")]
