@@ -23,7 +23,7 @@ app = "build/simulator/Build/Products/Debug-iphonesimulator/BahaVPN.app"
 run("xcrun", "simctl", "install", udid, app)
 test_command = ["xcodebuild", "-project", "BahaVPN.xcodeproj", "-scheme", "BahaVPN", "-configuration", "Debug",
                 "-destination", "id=" + udid, "-derivedDataPath", "build/simulator", "-resultBundlePath", "build/ui-tests.xcresult",
-                "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-", "DEVELOPMENT_TEAM=", "test"]
+                "ARCHS=arm64", "CODE_SIGNING_ALLOWED=YES", "CODE_SIGN_IDENTITY=-", "DEVELOPMENT_TEAM=", "test"]
 with open("simulator-test-build.log", "w") as log:
     tested = subprocess.run(test_command, stdout=log, stderr=subprocess.STDOUT)
 if tested.returncode:

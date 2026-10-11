@@ -77,7 +77,7 @@ import BahaCore
         busy = true
         defer { busy = false }
         do {
-            let json = try XrayConfiguration.make(profile: profile, dns: settings.dns)
+            let json = try XrayConfiguration.make(profile: profile, dns: settings.dns, rules: settings.routingRules ?? [], bypassLAN: settings.bypassLAN ?? false, domainStrategy: settings.domainStrategy)
             let selectedManager = manager ?? NETunnelProviderManager()
             let tunnel = NETunnelProviderProtocol()
             tunnel.providerBundleIdentifier = providerID

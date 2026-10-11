@@ -42,11 +42,11 @@ public enum SubscriptionLoader {
         let (bytes, response) = try await session.bytes(for: request, delegate: HTTPSRedirectPolicy())
         guard let http = response as? HTTPURLResponse else { throw ClientError.invalid("некорректный ответ сервера подписки") }
         try SubscriptionResponsePolicy.check(http)
-        guard response.expectedContentLength <= Int64(ImportParser.maximumBytes) else { throw ClientError.invalid("подписка превышает 2 мб") }
+        guard response.expectedContentLength <= Int64(ImportParser.maximumBytes) else { throw ClientError.invalid("подписка превышает 8 мб") }
         var data = Data()
         for try await byte in bytes {
             try Task.checkCancellation()
-            guard data.count < ImportParser.maximumBytes else { throw ClientError.invalid("подписка превышает 2 мб") }
+            guard data.count < ImportParser.maximumBytes else { throw ClientError.invalid("подписка превышает 8 мб") }
             data.append(byte)
         }
         guard let text = String(data: data, encoding: .utf8) else { throw ClientError.invalid("подписка должна содержать текст utf-8") }

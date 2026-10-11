@@ -12,3 +12,4 @@ build/
 __pycache__/
 *.pyc
 Native/XrayNative.xcframework/
+Tunnel/Resources/*.dat

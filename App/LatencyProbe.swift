@@ -10,6 +10,7 @@ final class LatencyProbe: @unchecked Sendable {
         connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: UInt16(port))!, using: .tcp)
     }
     static func measure(host: String, port: Int) async -> Int? {
+        guard !host.isEmpty, (1...65535).contains(port) else { return nil }
         let probe = LatencyProbe(host: host, port: port)
         return await probe.run()
     }

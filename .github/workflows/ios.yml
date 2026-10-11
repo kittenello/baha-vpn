@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: show toolchain
@@ -21,7 +21,21 @@ jobs:
           swift --version
       - name: test parser, configuration and persistence models
         working-directory: Core
+        env:
+          BAHA_FIXTURES: ${{ github.workspace }}/build/fixtures
         run: swift test
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - uses: actions/cache@v4
+        with:
+          path: Native/XrayNative.xcframework
+          key: full-xray-${{ runner.os }}-${{ hashFiles('Native/go.mod', 'Native/main.go', 'Native/engine/engine.go', 'scripts/build_native.py') }}
+      - name: fetch verified routing geo assets
+        run: python3 scripts/fetch_geo.py
+      - name: validate configurations and build full native xray
+        run: python3 scripts/build_native.py
       - name: install xcodegen
         run: brew install xcodegen
       - name: generate project
@@ -44,7 +58,7 @@ jobs:
           set -o pipefail
           xcodebuild -project BahaVPN.xcodeproj -scheme BahaVPN \
             -configuration Debug -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath build/simulator ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
             build | tee simulator-build.log
       - name: test import persistence, launch simulator and capture preview
         run: python3 scripts/simulator_preview.py

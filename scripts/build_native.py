@@ -13,6 +13,7 @@ def run(*args, env=None):
 
 run("go", "mod", "tidy")
 fixture_env = dict(os.environ)
+fixture_env["XRAY_LOCATION_ASSET"] = str(root / "Tunnel" / "Resources")
 if (root / "build" / "fixtures").exists():
     fixture_env["BAHA_FIXTURES"] = str(root / "build" / "fixtures")
 run("go", "test", "-v", "./engine", env=fixture_env)

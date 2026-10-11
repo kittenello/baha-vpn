@@ -18,8 +18,12 @@ public struct ServerProfile: Codable, Identifiable, Equatable {
         self.protocolName = protocolName; self.transport = transport; self.security = security
     }
 
-    public var detail: String { "\(protocolName) · \(security == "none" ? transport : security)" }
+    public var detail: String { protocolName == "json" ? "xray · raw json" : "\(protocolName) · \(security == "none" ? transport : security)" }
     public var identity: String {
+        if protocolName == "json", var object = try? JSONSerialization.jsonObject(with: Data(link.utf8)) as? [String: Any] {
+            for key in ["remarks", "remark", "name", "ps"] { object.removeValue(forKey: key) }
+            if let data = try? JSONSerialization.data(withJSONObject: object, options: .sortedKeys) { return data.base64EncodedString() }
+        }
         if protocolName == "vmess", let data = ImportParser.decodeBase64(String(link.dropFirst(8))),
            var object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             object.removeValue(forKey: "ps")
@@ -73,6 +77,9 @@ public struct ClientSettings: Codable, Equatable {
     public var refreshHours = 6
     public var connectOnDemand = false
     public var dns = "1.1.1.1"
+    public var routingRules: [TrafficRule]?
+    public var bypassLAN: Bool?
+    public var domainStrategy: String?
     public init() {}
 }
 

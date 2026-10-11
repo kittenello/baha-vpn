@@ -23,7 +23,7 @@ final class ImportTests: XCTestCase {
         XCTAssertEqual(try ImportParser.parse(Data(plain.utf8).base64EncodedString()).count, 2)
     }
     func testUnsupportedLineFailsWholeImport() {
-        XCTAssertThrowsError(try ImportParser.parse(basic + "\ntrojan://password@example.com:443"))
+        XCTAssertThrowsError(try ImportParser.parse(basic + "\nunknown://password@example.com:443"))
     }
     func testBadUUIDAndPortAreRejected() {
         XCTAssertThrowsError(try ImportParser.profile("vless://not-a-uuid@example.com:443"))
@@ -31,7 +31,7 @@ final class ImportTests: XCTestCase {
         XCTAssertThrowsError(try ImportParser.profile("vless://\(uuid)@example.com:0"))
     }
     func testUnsupportedTransportAndInsecureTLSAreRejected() {
-        XCTAssertThrowsError(try ImportParser.profile("vless://\(uuid)@example.com:443?security=tls&type=grpc"))
+        XCTAssertThrowsError(try ImportParser.profile("vless://\(uuid)@example.com:443?security=tls&type=unknown"))
         XCTAssertThrowsError(try ImportParser.profile("vless://\(uuid)@example.com:443?security=tls&allowInsecure=1"))
     }
     func testRealityKeyAndShortIDAreChecked() {

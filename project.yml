@@ -12,15 +12,15 @@ settings:
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
     PRODUCT_BUNDLE_IDENTIFIER: com.kittenello.bahavpn
-    MARKETING_VERSION: 0.1.0
-    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 0.2.0
+    CURRENT_PROJECT_VERSION: 2
     GENERATE_INFOPLIST_FILE: NO
     ENABLE_USER_SCRIPT_SANDBOXING: YES
 packages:
   BahaCore:
     path: Core
-  SwiftyXrayKit:
-    path: ThirdParty/SwiftyXrayKit
+  XrayNative:
+    path: Native
 targets:
   BahaVPN:
     type: application
@@ -47,7 +47,7 @@ targets:
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         CFBundleURLTypes:
           - CFBundleURLName: com.kittenello.bahavpn.import
-            CFBundleURLSchemes: [vless, vmess]
+            CFBundleURLSchemes: [vless, vmess, trojan, ss, hysteria2, hy2, wireguard, wg]
         UIFileSharingEnabled: false
         LSSupportsOpeningDocumentsInPlace: true
     entitlements:
@@ -57,9 +57,13 @@ targets:
   PacketTunnel:
     type: app-extension
     platform: iOS
-    sources: [Tunnel]
+    sources:
+      - path: Tunnel
+        excludes: [Resources]
+      - path: Tunnel/Resources
+        buildPhase: resources
     dependencies:
-      - package: SwiftyXrayKit
+      - package: XrayNative
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kittenello.bahavpn.tunnel

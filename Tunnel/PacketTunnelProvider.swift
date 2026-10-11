@@ -1,9 +1,8 @@
 import Foundation
 import NetworkExtension
-import SwiftyXrayKit
 
 final class PacketTunnelProvider: NEPacketTunnelProvider {
-    private var bridge: XrayBridge?
+    private var bridge: PacketFlowBridge?
     private let coreQueue = DispatchQueue(label: "baha.xray.lifecycle")
     private var totalSent: Int64 = 0
     private var totalReceived: Int64 = 0
@@ -31,14 +30,12 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
             guard let self else { completionHandler(NSError(domain: "baha.tunnel", code: 2)); return }
             if let error { completionHandler(error); return }
             self.coreQueue.async {
-                let bridge = XrayBridge(packetFlow: self.packetFlow)
+                let bridge = PacketFlowBridge(flow: self.packetFlow)
+                bridge.failure = { [weak self] error in self?.cancelTunnelWithError(error) }
                 do {
                     let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
                     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-                    let configPath = directory.appendingPathComponent("active-xray.json")
-                    defer { try? FileManager.default.removeItem(at: configPath) }
-                    try bridge.start(config: .json(config), dataDir: directory, finalConfigPath: configPath, preset: .mobile)
-                    // The core has consumed the configuration. Do not keep credentials in a plaintext file.
+                    try bridge.start(json: config, assets: Bundle.main.resourcePath ?? directory.path)
                     self.bridge = bridge
                     self.totalSent = 0; self.totalReceived = 0
                     completionHandler(nil)

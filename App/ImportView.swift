@@ -61,7 +61,7 @@ struct ImportView: View {
                             .frame(maxWidth: .infinity).padding(.vertical, 8)
                     }.buttonStyle(.borderedProminent).disabled(importing || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     Text("профили шифруются и сохраняются на устройстве").font(.caption).foregroundStyle(.secondary).frame(maxWidth: .infinity)
-                    Text("vless: tcp, ws, xhttp; tls, reality, vision. vmess: tcp и ws. подписки: обычный текст или base64.")
+                    Text("vless, vmess, trojan, shadowsocks, hysteria2, wireguard; tcp, ws, grpc, xhttp. подписки: ссылки, base64 и xray json. wireguard: ссылки и файлы conf.")
                         .font(.caption).foregroundStyle(.tertiary)
                 }.padding(20)
             }
@@ -82,9 +82,9 @@ struct ImportView: View {
                     let scoped = url.startAccessingSecurityScopedResource()
                     defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                     let values = try url.resourceValues(forKeys: [.fileSizeKey])
-                    guard (values.fileSize ?? 0) <= ImportParser.maximumBytes else { throw ClientError.invalid("файл превышает 2 мб") }
+                    guard (values.fileSize ?? 0) <= ImportParser.maximumBytes else { throw ClientError.invalid("файл превышает 8 мб") }
                     let data = try Data(contentsOf: url)
-                    guard data.count <= ImportParser.maximumBytes, let value = String(data: data, encoding: .utf8) else { throw ClientError.invalid("нужен текстовый файл utf-8 до 2 мб") }
+                    guard data.count <= ImportParser.maximumBytes, let value = String(data: data, encoding: .utf8) else { throw ClientError.invalid("нужен текстовый файл utf-8 до 8 мб") }
                     use(value)
                 } catch { localError = error.localizedDescription }
             }

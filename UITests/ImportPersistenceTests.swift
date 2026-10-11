@@ -1,6 +1,19 @@
 import XCTest
 
 final class ImportPersistenceTests: XCTestCase {
+    func testJSONImportThroughUI() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--reset-ui-state"]
+        app.launch()
+        let add = app.buttons["добавить сервер"].firstMatch
+        XCTAssertTrue(add.waitForExistence(timeout: 10)); add.tap()
+        let input = app.textViews["profile-input"]
+        XCTAssertTrue(input.waitForExistence(timeout: 5)); input.tap()
+        input.typeText(#"[{"remarks":"json-import-test","outbounds":[{"protocol":"trojan","settings":{"servers":[{"address":"example.com","port":443,"password":"test"}]}}]}]"#)
+        app.buttons["готово"].tap(); app.buttons["импортировать"].tap()
+        XCTAssertTrue(app.staticTexts["json-import-test"].firstMatch.waitForExistence(timeout: 10))
+    }
     func testImportAndFavoriteSurviveAppRestart() {
         continueAfterFailure = false
         let app = XCUIApplication()

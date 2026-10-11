@@ -1,7 +1,7 @@
 import Foundation
 
 public enum ImportParser {
-    public static let maximumBytes = 2 * 1024 * 1024
+    public static let maximumBytes = 8 * 1024 * 1024
 
     public static func decodeBase64(_ text: String) -> Data? {
         var cleaned = text.filter { !$0.isWhitespace }.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
@@ -19,11 +19,15 @@ public enum ImportParser {
     }
 
     public static func parse(_ text: String) throws -> [ServerProfile] {
-        guard text.utf8.count <= maximumBytes else { throw ClientError.invalid("файл превышает 2 мб") }
+        guard text.utf8.count <= maximumBytes else { throw ClientError.invalid("файл превышает 8 мб") }
         var body = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if !body.contains("://"), let decoded = decodeBase64(body), let string = String(data: decoded, encoding: .utf8) {
             body = string
         }
+        if body.hasPrefix("{") || (body.hasPrefix("[") && !body.hasPrefix("[Interface]")) {
+            return try jsonProfiles(body)
+        }
+        if body.hasPrefix("[Interface]") { return [try wireGuardFile(body)] }
         let lines = body.components(separatedBy: .newlines).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty && !$0.hasPrefix("#") }
         guard !lines.isEmpty, lines.count <= 2000 else { throw ClientError.invalid("пустой список или больше 2000 серверов") }
@@ -36,24 +40,29 @@ public enum ImportParser {
 
     public static func profile(_ raw: String) throws -> ServerProfile {
         let link = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if link.hasPrefix("{") { return try jsonProfiles(link).first! }
         if link.lowercased().hasPrefix("vmess://") { return try vmess(link) }
+        if link.lowercased().hasPrefix("trojan://") { return try trojan(link) }
+        if link.lowercased().hasPrefix("ss://") { return try shadowsocks(link) }
+        if link.lowercased().hasPrefix("hy2://") || link.lowercased().hasPrefix("hysteria2://") { return try hysteria2(link) }
+        if link.lowercased().hasPrefix("wireguard://") || link.lowercased().hasPrefix("wg://") { return try wireGuardLink(link) }
         guard let parts = URLComponents(string: link), parts.scheme?.lowercased() == "vless",
               let rawHost = parts.host, !rawHost.isEmpty, !rawHost.contains(where: \.isWhitespace),
               let port = parts.port, (1...65535).contains(port),
               let user = parts.user, UUID(uuidString: user) != nil, parts.password == nil else {
-            throw ClientError.invalid("поддерживаются vless:// и vmess:// с корректным адресом и uuid")
+            throw ClientError.invalid("нужна ссылка vless, vmess, trojan, ss, hysteria2, wireguard или xray json")
         }
         let query = try parameters(parts)
         let host = rawHost.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
         let transport = query["type"] ?? "tcp"
         let security = query["security"] ?? "none"
-        guard ["tcp", "ws", "xhttp"].contains(transport) else { throw ClientError.invalid("транспорт \(transport) пока не поддерживается") }
+        guard ["tcp", "raw", "ws", "xhttp", "grpc", "httpupgrade"].contains(transport) else { throw ClientError.invalid("неизвестный транспорт \(transport)") }
         guard ["none", "tls", "reality"].contains(security) else { throw ClientError.invalid("неизвестная защита соединения") }
         guard query["encryption", default: "none"] == "none" else { throw ClientError.invalid("поддерживается encryption=none") }
         guard query["headerType", default: "none"] == "none" else { throw ClientError.invalid("маскировка tcp пока не поддерживается") }
         guard !["1", "true"].contains(query["allowInsecure", default: "0"]) else { throw ClientError.invalid("небезопасный tls не поддерживается") }
         let flow = query["flow"] ?? ""
-        guard flow.isEmpty || (flow == "xtls-rprx-vision" && transport == "tcp" && security != "none") else {
+        guard flow.isEmpty || (flow == "xtls-rprx-vision" && ["tcp", "raw"].contains(transport) && security != "none") else {
             throw ClientError.invalid("vision требует tcp с tls или reality")
         }
         if security == "reality" {
@@ -97,8 +106,8 @@ public enum ImportParser {
         }
         let transport = object["net"] as? String ?? "tcp"
         let tls = object["tls"] as? String ?? ""
-        guard ["tcp", "ws"].contains(transport), ["", "none", "tls"].contains(tls) else {
-            throw ClientError.invalid("для vmess поддерживаются tcp/ws и tls")
+        guard ["tcp", "raw", "ws", "grpc", "httpupgrade", "xhttp"].contains(transport), ["", "none", "tls"].contains(tls) else {
+            throw ClientError.invalid("неизвестный транспорт или защита vmess")
         }
         guard Int(String(describing: object["aid"] ?? "0")) == 0 else { throw ClientError.invalid("устаревший vmess alterid не поддерживается") }
         guard (object["type"] as? String ?? "none") == "none" else { throw ClientError.invalid("маскировка vmess tcp пока не поддерживается") }

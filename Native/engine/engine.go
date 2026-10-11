@@ -9,6 +9,7 @@ import (
     "sync"
 
     "github.com/xtls/xray-core/core"
+    "golang.org/x/sys/unix"
     _ "github.com/xtls/xray-core/main/distro/all"
     _ "github.com/xtls/xray-core/proxy/hysteria"
     _ "github.com/xtls/xray-core/proxy/shadowsocks_2022"
@@ -18,6 +19,7 @@ import (
 
 var mu sync.Mutex
 var instance *core.Instance
+var activeFD = -1
 
 func Config(text string) (*core.Config, error) {
     return core.LoadConfig("json", bytes.NewReader([]byte(text)))
@@ -26,7 +28,7 @@ func Config(text string) (*core.Config, error) {
 func Start(text string, fd int, assets string) error {
     mu.Lock()
     defer mu.Unlock()
-    if instance != nil { _ = instance.Close(); instance = nil }
+    if instance != nil { if activeFD >= 0 { _ = unix.Shutdown(activeFD, unix.SHUT_RDWR) }; _ = instance.Close(); instance = nil }
     debug.SetMemoryLimit(32 * 1024 * 1024)
     debug.SetGCPercent(20)
     if err := os.Setenv("XRAY_TUN_FD", strconv.Itoa(fd)); err != nil { return err }
@@ -42,13 +44,15 @@ func Start(text string, fd int, assets string) error {
     if err != nil { return err }
     if err = next.Start(); err != nil { _ = next.Close(); return err }
     instance = next
+    activeFD = fd
     return nil
 }
 
 func Stop() {
     mu.Lock()
     defer mu.Unlock()
-    if instance != nil { _ = instance.Close(); instance = nil }
+    if instance != nil { if activeFD >= 0 { _ = unix.Shutdown(activeFD, unix.SHUT_RDWR) }; _ = instance.Close(); instance = nil }
+    activeFD = -1
     _ = os.Unsetenv("XRAY_TUN_FD")
     debug.FreeOSMemory()
 }
