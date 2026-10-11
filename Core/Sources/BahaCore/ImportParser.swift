@@ -38,17 +38,19 @@ public enum ImportParser {
         let link = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if link.lowercased().hasPrefix("vmess://") { return try vmess(link) }
         guard let parts = URLComponents(string: link), parts.scheme?.lowercased() == "vless",
-              let host = parts.host, !host.isEmpty, !host.contains(where: \.isWhitespace),
+              let rawHost = parts.host, !rawHost.isEmpty, !rawHost.contains(where: \.isWhitespace),
               let port = parts.port, (1...65535).contains(port),
               let user = parts.user, UUID(uuidString: user) != nil, parts.password == nil else {
             throw ClientError.invalid("поддерживаются vless:// и vmess:// с корректным адресом и uuid")
         }
         let query = try parameters(parts)
+        let host = rawHost.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
         let transport = query["type"] ?? "tcp"
         let security = query["security"] ?? "none"
         guard ["tcp", "ws", "xhttp"].contains(transport) else { throw ClientError.invalid("транспорт \(transport) пока не поддерживается") }
         guard ["none", "tls", "reality"].contains(security) else { throw ClientError.invalid("неизвестная защита соединения") }
         guard query["encryption", default: "none"] == "none" else { throw ClientError.invalid("поддерживается encryption=none") }
+        guard query["headerType", default: "none"] == "none" else { throw ClientError.invalid("маскировка tcp пока не поддерживается") }
         guard !["1", "true"].contains(query["allowInsecure", default: "0"]) else { throw ClientError.invalid("небезопасный tls не поддерживается") }
         let flow = query["flow"] ?? ""
         guard flow.isEmpty || (flow == "xtls-rprx-vision" && transport == "tcp" && security != "none") else {

@@ -25,13 +25,13 @@ struct ServersView: View {
                         EmptyState(title: "серверов пока нет", text: "добавь ссылку или подписку, либо измени фильтр", symbol: "network")
                         Button("добавить сервер") { destination = .profile }.buttonStyle(.borderedProminent)
                     } else {
-                        ForEach(groups, id: \.0) { title, profiles in
+                        ForEach(groups, id: \.id) { group in
                             VStack(alignment: .leading, spacing: 10) {
-                                Text(title).font(.caption).foregroundStyle(.secondary).padding(.leading, 4)
+                                Text(group.title).font(.caption).foregroundStyle(.secondary).padding(.leading, 4)
                                 VStack(spacing: 0) {
-                                    ForEach(profiles) { profile in
+                                    ForEach(group.profiles) { profile in
                                         row(profile)
-                                        if profile.id != profiles.last?.id { Divider().padding(.leading, 48) }
+                                        if profile.id != group.profiles.last?.id { Divider().padding(.leading, 48) }
                                     }
                                 }.background(Design.card, in: RoundedRectangle(cornerRadius: 18))
                             }
@@ -56,13 +56,13 @@ struct ServersView: View {
         }
     }
 
-    private var groups: [(String, [ServerProfile])] {
-        var result: [(String, [ServerProfile])] = []
+    private var groups: [(id: String, title: String, profiles: [ServerProfile])] {
+        var result: [(id: String, title: String, profiles: [ServerProfile])] = []
         let local = filtered.filter { $0.subscriptionID == nil }
-        if !local.isEmpty { result.append(("личные", local)) }
+        if !local.isEmpty { result.append(("local", "личные", local)) }
         for subscription in store.state.subscriptions {
             let profiles = filtered.filter { $0.subscriptionID == subscription.id }
-            if !profiles.isEmpty { result.append((subscription.name, profiles)) }
+            if !profiles.isEmpty { result.append((subscription.id.uuidString, subscription.name, profiles)) }
         }
         return result
     }

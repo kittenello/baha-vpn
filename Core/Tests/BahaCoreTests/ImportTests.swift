@@ -15,7 +15,7 @@ final class ImportTests: XCTestCase {
     }
     func testIPv6Endpoint() throws {
         let profile = try ImportParser.profile("vless://\(uuid)@[2001:db8::1]:443?security=tls")
-        XCTAssertTrue(profile.host.contains("2001:db8::1"))
+        XCTAssertEqual(profile.host, "2001:db8::1")
     }
     func testPlainAndBase64Subscriptions() throws {
         let plain = "# comment\n\(basic)\r\n\(reality)\n"

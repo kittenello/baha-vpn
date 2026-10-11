@@ -29,7 +29,8 @@ public struct ServerProfile: Codable, Identifiable, Equatable {
         }
         var parts = URLComponents(string: link)
         parts?.fragment = nil
-        parts?.queryItems = parts?.queryItems?.sorted { ($0.name, $0.value ?? "") < ($1.name, $1.value ?? "") }
+        let sortedQuery = parts?.queryItems?.sorted { ($0.name, $0.value ?? "") < ($1.name, $1.value ?? "") }
+        parts?.queryItems = sortedQuery
         return parts?.string ?? link
     }
 }
