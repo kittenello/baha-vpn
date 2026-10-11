@@ -29,5 +29,13 @@ struct EmptyState: View {
 }
 
 func formattedBytes(_ value: Int64) -> String {
-    ByteCountFormatter.string(fromByteCount: value, countStyle: .binary).lowercased()
+    let units = ["б", "кб", "мб", "гб", "тб"]
+    var count = Double(max(0, value))
+    var index = 0
+    while count >= 1024 && index < units.count - 1 { count /= 1024; index += 1 }
+    let formatter = NumberFormatter()
+    formatter.locale = Locale(identifier: "ru_RU")
+    formatter.numberStyle = .decimal
+    formatter.maximumFractionDigits = index == 0 ? 0 : 1
+    return "\(formatter.string(from: NSNumber(value: count)) ?? "0") \(units[index])"
 }

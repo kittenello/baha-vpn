@@ -36,9 +36,9 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
                     let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
                     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
                     let configPath = directory.appendingPathComponent("active-xray.json")
+                    defer { try? FileManager.default.removeItem(at: configPath) }
                     try bridge.start(config: .json(config), dataDir: directory, finalConfigPath: configPath, preset: .mobile)
                     // The core has consumed the configuration. Do not keep credentials in a plaintext file.
-                    try? FileManager.default.removeItem(at: configPath)
                     self.bridge = bridge
                     self.totalSent = 0; self.totalReceived = 0
                     completionHandler(nil)

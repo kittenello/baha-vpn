@@ -8,6 +8,7 @@ import SwiftUI
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).environmentObject(tunnel)
+                .environment(\.locale, Locale(identifier: "ru"))
                 .preferredColorScheme(.dark)
                 .task { store.seedPreview(); await store.refreshAll(onlyDue: true) }
                 .onChange(of: phase) { _, value in
