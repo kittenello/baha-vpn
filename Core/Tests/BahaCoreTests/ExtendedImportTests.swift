@@ -60,6 +60,7 @@ final class ExtendedImportTests: XCTestCase {
         XCTAssertEqual((object["routing"] as! [String: Any])["domainStrategy"] as? String, "IPIfNonMatch")
         XCTAssertEqual(((object["routing"] as! [String: Any])["rules"] as! [[String: Any]]).count, 1)
         XCTAssertEqual(try ImportParser.parse(Data(raw.utf8).base64EncodedString()).count, 1)
+        XCTAssertEqual(try ImportParser.parse(Data(("\u{feff}\n  " + raw).utf8).base64EncodedString()).count, 1)
     }
     func testWireGuardConf() throws {
         let raw = """
@@ -86,7 +87,9 @@ final class ExtendedImportTests: XCTestCase {
                      TrafficRule(kind: .port, action: .direct, patterns: ["80", "8000-9000"])]
         let json = try XrayConfiguration.make(profile: profile, dns: "1.1.1.1", rules: rules, bypassLAN: true)
         if let path = ProcessInfo.processInfo.environment["BAHA_FIXTURES"] {
-            try Data(json.utf8).write(to: URL(fileURLWithPath: path).appendingPathComponent("routing-geosite.json"))
+            let directory = URL(fileURLWithPath: path)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            try Data(json.utf8).write(to: directory.appendingPathComponent("routing-geosite.json"))
         }
         let object = try JSONSerialization.jsonObject(with: Data(json.utf8)) as! [String: Any]
         XCTAssertEqual((object["outbounds"] as! [[String: Any]]).count, 3)

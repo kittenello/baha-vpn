@@ -64,6 +64,7 @@ targets:
         buildPhase: resources
     dependencies:
       - package: XrayNative
+      - sdk: libresolv.tbd
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kittenello.bahavpn.tunnel

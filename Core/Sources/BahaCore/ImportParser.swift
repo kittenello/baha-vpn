@@ -24,6 +24,8 @@ public enum ImportParser {
         if !body.contains("://"), let decoded = decodeBase64(body), let string = String(data: decoded, encoding: .utf8) {
             body = string
         }
+        body = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        if body.first == "\u{feff}" { body.removeFirst(); body = body.trimmingCharacters(in: .whitespacesAndNewlines) }
         if body.hasPrefix("{") || (body.hasPrefix("[") && !body.hasPrefix("[Interface]")) {
             return try jsonProfiles(body)
         }
