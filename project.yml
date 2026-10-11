@@ -78,6 +78,16 @@ targets:
       path: Configuration/Tunnel.entitlements
       properties:
         com.apple.developer.networking.networkextension: [packet-tunnel-provider]
+  BahaVPNUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: BahaVPN
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kittenello.bahavpn.uitests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   BahaVPN:
     build:
@@ -87,3 +97,6 @@ schemes:
       config: Debug
     archive:
       config: Release
+    test:
+      config: Debug
+      targets: [BahaVPNUITests]

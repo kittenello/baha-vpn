@@ -28,7 +28,9 @@ import BahaCore
     }
 
     init() {
-        guard !ProcessInfo.processInfo.arguments.contains("--preview-data") else { return }
+        guard !ProcessInfo.processInfo.arguments.contains("--preview-data"),
+              !ProcessInfo.processInfo.arguments.contains("--ui-testing") else { return }
+        busy = true
         observer = NotificationCenter.default.publisher(for: .NEVPNStatusDidChange)
             .receive(on: DispatchQueue.main).sink { [weak self] _ in self?.updateStatus() }
         Task { await load() }
@@ -41,6 +43,7 @@ import BahaCore
     }
 
     private func load() async {
+        defer { busy = false }
         do {
             manager = try await NETunnelProviderManager.loadAllFromPreferences().first {
                 ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == providerID
@@ -57,7 +60,19 @@ import BahaCore
     }
 
     func toggle(profile: ServerProfile?, settings: ClientSettings) async {
-        if running { manager?.connection.stopVPNTunnel(); return }
+        guard !busy else { return }
+        if running {
+            busy = true
+            defer { busy = false }
+            do {
+                // A manual disconnect must not be immediately undone by an active on-demand rule.
+                manager?.isOnDemandEnabled = false
+                try await manager?.saveToPreferences()
+                manager?.connection.stopVPNTunnel()
+                updateStatus()
+            } catch { self.error = "не удалось отключить впн: \(error.localizedDescription)" }
+            return
+        }
         guard !busy, let profile else { error = "сначала добавь и выбери сервер"; return }
         busy = true
         defer { busy = false }

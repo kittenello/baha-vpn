@@ -46,7 +46,7 @@ jobs:
             -configuration Debug -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO \
             build | tee simulator-build.log
-      - name: launch simulator and capture preview
+      - name: test import persistence, launch simulator and capture preview
         run: python3 scripts/simulator_preview.py
       - name: upload unsigned ipa and simulator preview
         uses: actions/upload-artifact@v4
@@ -55,6 +55,7 @@ jobs:
           path: |
             build/baha-vpn-unsigned.ipa
             build/preview.png
+            build/ui-tests.xcresult
             build/simulator/Build/Products/Debug-iphonesimulator/BahaVPN.app
           retention-days: 14
       - name: upload build logs

@@ -25,7 +25,7 @@ struct SettingsView: View {
                 Section {
                     LabeledContent("серверов", value: "\(store.state.profiles.count)")
                     LabeledContent("подписок", value: "\(store.state.subscriptions.count)")
-                } header: { Text("данные") } footer: { Text("профили зашифрованы aes-gcm. ключ хранится в системной связке ключей. аналитики и отправки профилей разработчику нет.") }
+                } header: { Text("данные") } footer: { Text("профили зашифрованы aes-gcm, ключ — в keychain. при загрузке подписки провайдер получает идентификатор устройства, версию ios и тип устройства для проверки лимита. разработчику клиента профили не отправляются.") }
             }.scrollContentBackground(.hidden).pageBackground().navigationTitle("настройки")
         }
     }

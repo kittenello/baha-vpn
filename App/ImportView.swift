@@ -15,6 +15,7 @@ struct ImportView: View {
     @State private var localError: String?
     @State private var subscriptionMode = false
     @State private var initialized = false
+    @FocusState private var editing: Bool
 
     var body: some View {
         NavigationStack {
@@ -34,9 +35,11 @@ struct ImportView: View {
                     }.background(Design.card, in: RoundedRectangle(cornerRadius: 18))
                     if subscriptionMode {
                         TextField("название подписки", text: $name).textInputAutocapitalization(.never).cardStyle()
+                        Text("провайдеру подписки передаётся постоянный идентификатор устройства для проверки лимита устройств").font(.caption).foregroundStyle(.secondary)
                     }
                     Text(subscriptionMode ? "https-ссылка подписки" : "ссылка или список серверов").font(.subheadline).foregroundStyle(.secondary)
                     TextEditor(text: $text).font(.system(.body, design: .monospaced)).frame(minHeight: 150)
+                        .accessibilityIdentifier("profile-input").focused($editing)
                         .scrollContentBackground(.hidden).autocorrectionDisabled().textInputAutocapitalization(.never)
                         .padding(12).background(Design.card, in: RoundedRectangle(cornerRadius: 16))
                         .overlay(alignment: .topLeading) {
@@ -65,6 +68,7 @@ struct ImportView: View {
             .navigationTitle(subscriptionMode ? "добавить подписку" : "добавить сервер")
             .navigationBarTitleDisplayMode(.inline).pageBackground()
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("закрыть") { dismiss() }.disabled(importing) } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("готово") { editing = false } } }
             .interactiveDismissDisabled(importing)
             .onAppear {
                 guard !initialized else { return }

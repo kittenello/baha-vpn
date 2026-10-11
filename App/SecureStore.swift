@@ -6,8 +6,10 @@ import BahaCore
 struct SecureStore {
     private let service = "com.kittenello.bahavpn.storage"
     private var fileURL: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("profiles-v1.aes")
+        let testing = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+        let name = testing ? "ui-tests-profiles-v1.aes" : "profiles-v1.aes"
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(name)
     }
 
     func read() throws -> ClientState {

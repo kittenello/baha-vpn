@@ -13,7 +13,12 @@ import BahaCore
     private var loadFailed = false
 
     init() {
-        do { state = try storage.read(); state.repairSelection() }
+        do {
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--reset-ui-state") {
+                try storage.write(ClientState())
+            }
+            state = try storage.read(); state.repairSelection()
+        }
         catch { self.error = "не удалось открыть сохранённые профили: \(error.localizedDescription)"; loadFailed = true }
     }
 
@@ -51,7 +56,7 @@ import BahaCore
     func addSubscription(name: String, text: String) async throws {
         let url = try ImportParser.subscriptionURL(text)
         guard !state.subscriptions.contains(where: { $0.url == url }) else { throw ClientError.invalid("подписка уже добавлена") }
-        let result = try await SubscriptionLoader.fetch(url)
+        let result = try await SubscriptionLoader.fetch(url, device: DeviceIdentity.metadata(for: url))
         // Recheck after suspension to avoid duplicate concurrent additions.
         guard !state.subscriptions.contains(where: { $0.url == url }) else { throw ClientError.invalid("подписка уже добавлена") }
         let subscription = ServerSubscription(name: name.trimmingCharacters(in: .whitespaces).isEmpty ? "подписка" : name, url: url)
@@ -66,7 +71,7 @@ import BahaCore
         guard refreshing.insert(subscription.id).inserted else { return }
         defer { refreshing.remove(subscription.id) }
         do {
-            let result = try await SubscriptionLoader.fetch(subscription.url)
+            let result = try await SubscriptionLoader.fetch(subscription.url, device: DeviceIdentity.metadata(for: subscription.url))
             guard state.subscriptions.contains(where: { $0.id == subscription.id }) else { return }
             change { $0.replace(subscriptionID: subscription.id, profiles: result.profiles, usage: result.usage) }
         } catch { self.error = "\(subscription.name): \(error.localizedDescription). прежние серверы сохранены" }
