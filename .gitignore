@@ -11,3 +11,4 @@ build/
 *.mobileprovision
 __pycache__/
 *.pyc
+Native/XrayNative.xcframework/
